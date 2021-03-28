@@ -48,20 +48,44 @@ begin
 end
 
 --TESTS
-    --foute test
-Begin TRAN
-    insert into offr
-    values ('RGDEV', '2019-07-02', 'CONF', 6, 1015, 'SAN FRANCISCO'),
-           ('RGDEV', '2019-05-02', 'CONF', 6, null, 'SAN FRANCISCO'),
-           ('RGDEV', '2019-06-02', 'CONF', 6, null, 'SAN FRANCISCO'),
-           ('RGARCH', '2019-07-02', 'CONF', 6, 1015, 'SAN FRANCISCO')
-rollback tran
-    --GOEDE TESTS
-begin tran
-    insert into offr
-    values ('RGDEV', '2019-07-02', 'CONF', 6, 1018, 'SAN FRANCISCO'),
+EXEC tSQLt.NewTestClass 'tr_uniqueStartdateAndTrainer_Test';
+Go
+
+create or alter procedure tr_uniqueStartdateAndTrainer_Test.[Test false insert multiple insert]
+AS
+BEGIN
+    --SETUP
+        EXEC tSQLt.FakeTable 'COURSE.dbo.offr'
+        EXEC tSQLt.ApplyTrigger 'COURSE.dbo.offr', 'tr_uniqueStartdateAndTrainer'
+
+    --ASSERT
+    exec tSQLt.ExpectException
+    @ExpectedMessage = 'De trainer en tijd moeten uniek zijn'
+
+    --ACT
+    insert into COURSE.dbo.offr
+        values  ('RGDEV', '2019-07-02', 'CONF', 6, 1015, 'SAN FRANCISCO'),
+                ('RGDEV', '2019-06-02', 'CONF', 6, null, 'SAN FRANCISCO'),
+                ('RGARCH', '2019-07-02', 'CONF', 6, 1015, 'SAN FRANCISCO')
+end
+
+    create or alter procedure tr_uniqueStartdateAndTrainer_Test.[Test true insert multiple insert]
+AS
+BEGIN
+    --SETUP
+        EXEC tSQLt.FakeTable 'COURSE.dbo.offr'
+        EXEC tSQLt.ApplyTrigger 'COURSE.dbo.offr', 'tr_uniqueStartdateAndTrainer'
+
+    --ASSERT
+    exec tSQLt.ExpectNoException
+
+    --ACT
+    insert into COURSE.dbo.offr
+            values ('RGDEV', '2019-07-02', 'CONF', 6, 1018, 'SAN FRANCISCO'),
            ('PLSQL', '2019-07-02', 'CONF', 6, null, 'SAN FRANCISCO'),
            ('J2EE', '2019-07-02', 'CONF', 6, null, 'SAN FRANCISCO'),
            ('RGARCH', '2019-07-02', 'CONF', 6, 1015, 'SAN FRANCISCO')
-rollback tran
+end
+
+
 
